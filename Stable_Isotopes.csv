@@ -1,0 +1,202 @@
+﻿Stable_Isotope,Species,Trophic_Group,Community,Replicate_1,Replicate_2,Replicate_3,Replicate_4,Replicate_5
+C,Ochetellus glaber,non-spider predator,OP,n/a,n/a,n/a,n/a,n/a
+C,Neohydnus hozumii,non-spider predator,OP,-24.04,-25.41,-25.7,-23,-23.94
+C,Scymnus babai,non-spider predator,OP,-26.66,-26.08,-25.83,-27.66,-26.75
+C,Scymnus hoffmanni,non-spider predator,OP,-27.5,-27.3,-27.35,-26.7,-27.83
+C,Syndyas sp.,non-spider predator,OP,-25.26,-26.02,-24.38,-25.67,-23.55
+C,Platygastridae,parasitoid,OP,-27.84,-26.38,-25.07,-27.21,-25.54
+C,Eulophidae,parasitoid,OP,-25.69,-26.68,-26.15,-25.05,-25.87
+C,Braconidae,parasitoid,OP,-27.35,-26.34,-26.03,-26.65,-27.05
+C,Pteromalidae,parasitoid,OP,-25.84,-25.7,-26.36,-26.02,-26.54
+C,Eucoilidae,parasitoid,OP,n/a,n/a,n/a,n/a,n/a
+C,Mymaridae,parasitoid,OP,n/a,n/a,n/a,n/a,n/a
+C,Araneidae,web-building spider,OP,-31.66,-30.51,-31.1,-31.35,-31.14
+C,Chrysso spp.,web-building spider,OP,n/a,n/a,n/a,n/a,n/a
+C,Linyphiidae,web-building spider,OP,-26.89,-26.49,-27.29,-26.43,-26.55
+C,Tetragnatha spp.,web-building spider,OP,-27.14,-28.16,n/a,-21.54,-25.58
+C,Araneida,hunting spider,OP,-27.24,-25.97,-26.43,-30.66,-30.18
+C,Clubiona spp.,hunting spider,OP,-26.5,-25.87,-25.89,-26.03,-25.63
+C,Pisauridae,hunting spider,OP,-31.42,-31.43,-31.44,-29.67,-28.73
+C,Phragmites australis,plant,OP,-25.73,-25.86,-25.62,-26.81,-27.51
+C,Spartina alterniflora,plant,OP,n/a,n/a,n/a,n/a,n/a
+C,Ochetellus glaber,non-spider predator,TP,-24.98,-24.48,-24.9,-25.83,-25.96
+C,Neohydnus hozumii,non-spider predator,TP,-24.68,-23.88,-24.17,-23.7,-24.3
+C,Scymnus babai,non-spider predator,TP,-23.83,-24.37,-25.31,-24.37,-25.52
+C,Scymnus hoffmanni,non-spider predator,TP,-24.94,-24.96,-24.69,-23.03,-25.45
+C,Syndyas sp.,non-spider predator,TP,-23.2,-22.16,-22.35,-19.67,-22.53
+C,Platygastridae,parasitoid,TP,-24.35,-24.45,-24.95,-23.84,-26.41
+C,Eulophidae,parasitoid,TP,-25.77,-24.13,-25.24,-26.38,-26.96
+C,Braconidae,parasitoid,TP,-26.82,-24.28,-26.79,-25.43,-26.69
+C,Pteromalidae,parasitoid,TP,-23.81,-23.42,-23.67,-24.11,-24.52
+C,Eucoilidae,parasitoid,TP,n/a,n/a,n/a,n/a,n/a
+C,Mymaridae,parasitoid,TP,n/a,n/a,n/a,n/a,n/a
+C,Araneidae,web-building spider,TP,n/a,-29.95,-28.35,-29.31,-23.62
+C,Chrysso spp.,web-building spider,TP,n/a,n/a,n/a,n/a,n/a
+C,Linyphiidae,web-building spider,TP,-25.92,-27.37,n/a,-27.33,n/a
+C,Tetragnatha spp.,web-building spider,TP,-26.05,-26.56,-26.82,n/a,n/a
+C,Araneida,hunting spider,TP,-23.15,-26.52,n/a,-28.27,-24.21
+C,Clubiona spp.,hunting spider,TP,-23.74,-24.9,-26.46,-25.04,-25.64
+C,Pisauridae,hunting spider,TP,-27.62,-23.55,n/a,-27.64,n/a
+C,Phragmites australis,plant,TP,-26.61,-26.49,-27.26,-25.37,-26.2
+C,Spartina alterniflora,plant,TP,n/a,n/a,n/a,n/a,n/a
+C,Ochetellus glaber,non-spider predator,PS,-23.24,-22.92,-20.93,-20.98,-22.23
+C,Neohydnus hozumii,non-spider predator,PS,-23.82,-22.4,-23.45,-22.08,-23.9
+C,Scymnus babai,non-spider predator,PS,-24.41,-23.57,-25.2,-25.18,-25.56
+C,Scymnus hoffmanni,non-spider predator,PS,-25.45,-24.86,-24.64,-24.61,-24.54
+C,Syndyas sp.,non-spider predator,PS,-15.65,-21.29,-18.01,-14.87,-17.27
+C,Platygastridae,parasitoid,PS,-24.87,-20.38,-15.22,n/a,-21.47
+C,Eulophidae,parasitoid,PS,-18.48,-22.82,-16.52,-17.49,-22.9
+C,Braconidae,parasitoid,PS,-22.27,-20.69,-16.27,-18.17,-21.26
+C,Pteromalidae,parasitoid,PS,-20.76,-17.9,-16.11,-15.05,-18.41
+C,Eucoilidae,parasitoid,PS,-16.91,-16.74,-14.6,-13.92,-16.77
+C,Mymaridae,parasitoid,PS,-19.03,-20.45,-17.12,-17.95,-18.25
+C,Araneidae,web-building spider,PS,-22.03,-20.65,-23.51,-20.12,-15.44
+C,Chrysso spp.,web-building spider,PS,-18.17,-22.91,-18.92,-14.57,-14.06
+C,Linyphiidae,web-building spider,PS,-15.47,-19.9,-17.4,-20.35,n/a
+C,Tetragnatha spp.,web-building spider,PS,-19.73,-16.95,-13.68,-21.58,-20
+C,Araneida,hunting spider,PS,-22.88,-24.44,-18.15,n/a,-19.69
+C,Clubiona spp.,hunting spider,PS,n/a,-21.71,n/a,-16.55,-22.16
+C,Pisauridae,hunting spider,PS,-24.36,-18.84,-16.62,-18.35,-20.13
+C,Phragmites australis,plant,PS-P,-27.08,-26.44,-26.43,-25.94,n/a
+C,Spartina alterniflora,plant,PS-S,-12.73,-13.01,-12.72,-13.57,-13.01
+C,Ochetellus glaber,non-spider predator,IS,-13.75,-12.92,-13.18,-13.62,-22.06
+C,Neohydnus hozumii,non-spider predator,IS,n/a,n/a,n/a,n/a,n/a
+C,Scymnus babai,non-spider predator,IS,-24.74,-26.02,-25.83,-24.76,-23.47
+C,Scymnus hoffmanni,non-spider predator,IS,n/a,-23.02,-25.23,-25.72,-25.27
+C,Syndyas sp.,non-spider predator,IS,-16.9,-17.13,-17.36,-24.16,-23.16
+C,Platygastridae,parasitoid,IS,-25.77,-23.81,-16.42,-14.78,-17.5
+C,Eulophidae,parasitoid,IS,n/a,n/a,n/a,n/a,n/a
+C,Braconidae,parasitoid,IS,-18.64,-17.28,-14.59,-12.69,-17.94
+C,Pteromalidae,parasitoid,IS,-16.63,-14.03,-13.4,-16.17,-15.35
+C,Eucoilidae,parasitoid,IS,-14.25,-13.89,-13.81,-14.36,-15.97
+C,Mymaridae,parasitoid,IS,-18.15,-13.34,-14.23,-18.48,-19.84
+C,Araneidae,web-building spider,IS,n/a,-12.84,-13.39,n/a,-14.25
+C,Chrysso spp.,web-building spider,IS,-13.57,n/a,-12.51,-12.37,-10.53
+C,Linyphiidae,web-building spider,IS,-16.62,-17.63,-19.85,-17.24,-14.48
+C,Tetragnatha spp.,web-building spider,IS,-15.85,-16.86,-14.16,-16.7,-15.57
+C,Araneida,hunting spider,IS,-10.82,n/a,-13.38,-15.04,-13.47
+C,Clubiona spp.,hunting spider,IS,n/a,-15.46,-14.03,-13.57,-15.09
+C,Pisauridae,hunting spider,IS,-12.59,-15.72,-12.85,-14.27,-14.22
+C,Phragmites australis,plant,IS,n/a,n/a,n/a,n/a,n/a
+C,Spartina alterniflora,plant,IS,-13.04,-13.09,-12.75,-13.38,-12.99
+C,Ochetellus glaber,non-spider predator,RP,n/a,n/a,n/a,n/a,n/a
+C,Neohydnus hozumii,non-spider predator,RP,-24.93,-24.97,-25.1,-26.1,-24.62
+C,Scymnus babai,non-spider predator,RP,-26.5,-26.49,-26.2,-25.82,-26.79
+C,Scymnus hoffmanni,non-spider predator,RP,-26.42,-26.03,-25.55,-19.94,-26.09
+C,Syndyas sp.,non-spider predator,RP,-24.02,-22.97,-24.48,-23.05,-25.29
+C,Platygastridae,parasitoid,RP,-23.64,-24.56,-25.25,-24.52,-29.53
+C,Eulophidae,parasitoid,RP,-26.74,-25.55,-27.64,-26.04,-25.41
+C,Braconidae,parasitoid,RP,-27.08,-26.49,-25.21,-27.01,-25.95
+C,Pteromalidae,parasitoid,RP,-26.1,-25.29,-25.08,-25.55,-26.24
+C,Eucoilidae,parasitoid,RP,n/a,n/a,n/a,n/a,n/a
+C,Mymaridae,parasitoid,RP,n/a,n/a,n/a,n/a,n/a
+C,Araneidae,web-building spider,RP,-21.41,n/a,n/a,-26.16,-27.88
+C,Chrysso spp.,web-building spider,RP,n/a,n/a,n/a,n/a,n/a
+C,Linyphiidae,web-building spider,RP,-22.22,-25.27,-23.85,-21.93,-24.64
+C,Tetragnatha spp.,web-building spider,RP,-20.75,-20.77,-20.32,-24.9,-24.93
+C,Araneida,hunting spider,RP,-23.76,-23.76,-26.15,-24.16,-27.77
+C,Clubiona spp.,hunting spider,RP,-23.57,n/a,-30.77,-23.27,-27.52
+C,Pisauridae,hunting spider,RP,n/a,-24.74,-27.84,-23.7,-24.81
+C,Phragmites australis,plant,RP,-27.16,-26.6,-26.64,-26.29,-26.96
+C,Spartina alterniflora,plant,RP,n/a,n/a,n/a,n/a,n/a
+N,Ochetellus glaber,non-spider predator,OP,n/a,n/a,n/a,n/a,n/a
+N,Neohydnus hozumii,non-spider predator,OP,8.66,9.44,9.03,6.76,12.05
+N,Scymnus babai,non-spider predator,OP,10.37,8.26,7.16,7.16,8.14
+N,Scymnus hoffmanni,non-spider predator,OP,8.88,7.84,9.88,8.52,10.43
+N,Syndyas sp.,non-spider predator,OP,6.7,6.55,6.28,6.49,7.22
+N,Platygastridae,parasitoid,OP,8.22,9.41,10.95,11.08,8.54
+N,Eulophidae,parasitoid,OP,8.12,9.43,8.77,9.52,9.74
+N,Braconidae,parasitoid,OP,9.96,9.65,10.86,10.12,11.13
+N,Pteromalidae,parasitoid,OP,12.53,11.52,10.52,10.69,12.07
+N,Eucoilidae,parasitoid,OP,n/a,n/a,n/a,n/a,n/a
+N,Mymaridae,parasitoid,OP,n/a,n/a,n/a,n/a,n/a
+N,Araneidae,web-building spider,OP,7.03,6.6,5.12,6.34,7.64
+N,Chrysso spp.,web-building spider,OP,n/a,n/a,n/a,n/a,n/a
+N,Linyphiidae,web-building spider,OP,7.33,7.34,6.67,6.2,6.41
+N,Tetragnatha spp.,web-building spider,OP,6.28,5.36,n/a,6.44,6.61
+N,Araneida,hunting spider,OP,6.81,7.46,7.19,6.43,5.62
+N,Clubiona spp.,hunting spider,OP,7.05,5.95,5.62,6.68,6.9
+N,Pisauridae,hunting spider,OP,4.67,5.99,4.48,6.68,6.32
+N,Phragmites australis,plant,OP,4.91,5.53,6.66,5.53,7.26
+N,Spartina alterniflora,plant,OP,n/a,n/a,n/a,n/a,n/a
+N,Ochetellus glaber,non-spider predator,TP,10.71,8.97,10.8,9.32,10.62
+N,Neohydnus hozumii,non-spider predator,TP,10.96,14.2,10.96,14.95,10.32
+N,Scymnus babai,non-spider predator,TP,10.1,8.57,9.15,10.11,9.88
+N,Scymnus hoffmanni,non-spider predator,TP,9.32,10.1,9.28,10.33,6.59
+N,Syndyas sp.,non-spider predator,TP,7.09,10.93,8.1,8.69,8.24
+N,Platygastridae,parasitoid,TP,10.93,10.71,12.43,9.52,9.18
+N,Eulophidae,parasitoid,TP,9.26,10.19,10.68,11.69,9.74
+N,Braconidae,parasitoid,TP,8.28,11.29,10.6,9.79,10
+N,Pteromalidae,parasitoid,TP,24.91,18.08,20.29,23.34,17.4
+N,Eucoilidae,parasitoid,TP,n/a,n/a,n/a,n/a,n/a
+N,Mymaridae,parasitoid,TP,n/a,n/a,n/a,n/a,n/a
+N,Araneidae,web-building spider,TP,n/a,9.77,8.43,7.59,8.09
+N,Chrysso spp.,web-building spider,TP,n/a,n/a,n/a,n/a,n/a
+N,Linyphiidae,web-building spider,TP,8.87,10.03,n/a,7.81,n/a
+N,Tetragnatha spp.,web-building spider,TP,11.16,9.01,7.03,n/a,n/a
+N,Araneida,hunting spider,TP,8.72,8.91,n/a,8.46,8.41
+N,Clubiona spp.,hunting spider,TP,9.25,5.16,4.98,4.77,6.81
+N,Pisauridae,hunting spider,TP,5.6,6.3,n/a,4.4,n/a
+N,Phragmites australis,plant,TP,8.49,7.17,7.17,6.79,7.43
+N,Spartina alterniflora,plant,TP,n/a,n/a,n/a,n/a,n/a
+N,Ochetellus glaber,non-spider predator,PS,10.9,11.04,11.2,10.43,9.45
+N,Neohydnus hozumii,non-spider predator,PS,9.23,11.11,10.97,10.77,10.36
+N,Scymnus babai,non-spider predator,PS,8.87,9.82,9.04,9.81,11.07
+N,Scymnus hoffmanni,non-spider predator,PS,9.23,9.85,9.66,9.72,10.6
+N,Syndyas sp.,non-spider predator,PS,8.69,9.06,8.24,10.03,9.53
+N,Platygastridae,parasitoid,PS,9.55,10.55,8.06,n/a,8.96
+N,Eulophidae,parasitoid,PS,9.85,7.22,10.36,7.43,10.71
+N,Braconidae,parasitoid,PS,11.5,10.79,9.08,8.26,6.57
+N,Pteromalidae,parasitoid,PS,12.6,14.9,15.06,13.41,16.72
+N,Eucoilidae,parasitoid,PS,8.33,11.11,9.12,11.92,13.7
+N,Mymaridae,parasitoid,PS,4.08,4.68,5.15,5.55,5.05
+N,Araneidae,web-building spider,PS,8.33,9.4,6.78,8.95,5.74
+N,Chrysso spp.,web-building spider,PS,7.64,9.16,7.81,7.75,8.58
+N,Linyphiidae,web-building spider,PS,7.88,8.27,9.32,8.21,n/a
+N,Tetragnatha spp.,web-building spider,PS,8.05,8.09,7.62,8.47,8.35
+N,Araneida,hunting spider,PS,9.07,8.77,8.21,n/a,7.95
+N,Clubiona spp.,hunting spider,PS,n/a,8.73,n/a,7.17,5.37
+N,Pisauridae,hunting spider,PS,6.88,7.04,7.01,7.51,7.74
+N,Phragmites australis,plant,PS-P,8.07,6.79,6.15,8.1,n/a
+N,Spartina alterniflora,plant,PS-S,7.32,6.44,7.29,6.75,6.32
+N,Ochetellus glaber,non-spider predator,IS,9.51,8.53,9.28,10.37,6.05
+N,Neohydnus hozumii,non-spider predator,IS,n/a,n/a,n/a,n/a,n/a
+N,Scymnus babai,non-spider predator,IS,9.96,8.33,7.81,9.95,7.57
+N,Scymnus hoffmanni,non-spider predator,IS,n/a,9.5,9.11,9.33,10.14
+N,Syndyas sp.,non-spider predator,IS,8.3,7.64,8.62,12.42,9.49
+N,Platygastridae,parasitoid,IS,9.61,8.87,14.11,18.38,9.17
+N,Eulophidae,parasitoid,IS,n/a,n/a,n/a,n/a,n/a
+N,Braconidae,parasitoid,IS,5.46,2.45,7.04,4.52,6.75
+N,Pteromalidae,parasitoid,IS,8.63,12.51,9.91,8.74,9.99
+N,Eucoilidae,parasitoid,IS,10.47,8.6,9.84,10.37,9.28
+N,Mymaridae,parasitoid,IS,4.69,6.12,5.83,5.92,5.4
+N,Araneidae,web-building spider,IS,n/a,6.6,7.78,n/a,9.61
+N,Chrysso spp.,web-building spider,IS,8.3,n/a,8.07,9.54,8.61
+N,Linyphiidae,web-building spider,IS,8.38,7.63,8.23,7.65,8.93
+N,Tetragnatha spp.,web-building spider,IS,9.14,8.33,8.71,9.51,8.87
+N,Araneida,hunting spider,IS,8.16,n/a,8.77,10.13,8.8
+N,Clubiona spp.,hunting spider,IS,n/a,8.47,7.57,7.65,7.95
+N,Pisauridae,hunting spider,IS,7.35,7.19,8.29,9.12,8.65
+N,Phragmites australis,plant,IS,n/a,n/a,n/a,n/a,n/a
+N,Spartina alterniflora,plant,IS,8.99,6.72,6.54,7.56,8.12
+N,Ochetellus glaber,non-spider predator,RP,n/a,n/a,n/a,n/a,n/a
+N,Neohydnus hozumii,non-spider predator,RP,9.47,7.32,7.85,7.96,10.89
+N,Scymnus babai,non-spider predator,RP,7.04,8.31,5.82,9.24,9.77
+N,Scymnus hoffmanni,non-spider predator,RP,7.61,8.68,9.22,7.46,9.58
+N,Syndyas sp.,non-spider predator,RP,7.53,8.18,6.49,7.31,9.58
+N,Platygastridae,parasitoid,RP,8.11,11.6,7.68,9.07,7
+N,Eulophidae,parasitoid,RP,8.56,8.98,9.69,9.34,8.86
+N,Braconidae,parasitoid,RP,8.04,8.95,8.86,9.37,10.66
+N,Pteromalidae,parasitoid,RP,8.03,14.94,11.78,13.17,11.41
+N,Eucoilidae,parasitoid,RP,n/a,n/a,n/a,n/a,n/a
+N,Mymaridae,parasitoid,RP,n/a,n/a,n/a,n/a,n/a
+N,Araneidae,web-building spider,RP,6.36,n/a,n/a,5.85,6.72
+N,Chrysso spp.,web-building spider,RP,n/a,n/a,n/a,n/a,n/a
+N,Linyphiidae,web-building spider,RP,7.47,6.91,7.03,6.87,6.68
+N,Tetragnatha spp.,web-building spider,RP,5.84,6.07,5.89,5.53,6.47
+N,Araneida,hunting spider,RP,7.6,6.26,7.3,6.77,8.04
+N,Clubiona spp.,hunting spider,RP,6.06,n/a,3.96,6.09,7.73
+N,Pisauridae,hunting spider,RP,n/a,4.41,4.25,3.84,4.92
+N,Spartina alterniflora,plant,RP,n/a,n/a,n/a,n/a,n/a
+N,Phragmites australis,plant,RP,6.1,5.13,8.09,6.73,7.81
+,,,,,,,,
