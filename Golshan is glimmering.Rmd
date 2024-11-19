@@ -12,6 +12,16 @@ require(car)
 require(rgl)
 require(ggfortify)
 
+options(rgl.useNULL = TRUE) 
+rgl::setupKnitr(autoprint = TRUE)
+```
+
+```{r}
+install.packages("ggfortify")
+```
+
+```{r}
+install.packages("rgl")
 ```
 
 ```{r}
@@ -244,6 +254,42 @@ par(mfrow=c(1,1))
 pairs(final_shannon_UPDATED[, c("soil_C", "soil_N", "soil_P", "soil_pH", 
                                     "soil_sal", "soil_wat", "biomass_above", 
                                     "plant_dens", "leaf_N", "leaf_C", "leaf_P")])
+```
+
+```{r}
+pca.out <- prcomp(final_shannon_UPDATED[, c("soil_C", "soil_N", "soil_P", "soil_pH", 
+                                    "soil_sal", "soil_wat", "biomass_above", 
+                                    "plant_dens", "leaf_N", "leaf_C", "leaf_P")], scale.=T)
+```
+```{r}
+pca.out
+```
+
+
+```{r}
+summary(pca.out)
+```
+
+
+```{r}
+head(pca.out$rotation)
+```
+```{r}
+#soil_n, water, ph, c, aboveground biomass
+#
+```
+
+```{r}
+
+```
+
+
+```{r}
+autoplot(pca.out, x=1,y=2,
+         data=final_shannon_UPDATED, 
+         colour="Treatment_grouped",
+         frame=TRUE) +
+  theme_classic()
 ```
 
 
