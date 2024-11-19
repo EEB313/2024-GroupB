@@ -1,0 +1,160 @@
+---
+title: "lol final project"
+output: pdf_document
+date: "2024-11-14"
+---
+
+```{r, message=F, warning=F}
+require(tidyverse)
+require(deSolve)
+require(vegan)
+require(car)
+```
+
+```{r}
+install.packages("fitdistrplus")
+require(fitdistrplus)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+read_csv("Arthropod_List.csv") -> Arthropod_List
+
+read_csv("Plant_Traits.csv") -> Plant_Traits
+
+read_csv("Soil_Traits.csv") -> Soil_Traits
+
+read_csv("Stable_Isotopes.csv") -> Stable_Isotopes
+
+read_csv("final_arthro.csv") -> Arthropod_List_Updated
+
+```
+
+```{r}
+Arthropod_list[1,]
+```
+
+
+#Shannon Diversity Index
+```{r}
+# Sample data: abundance of species
+abundance_comm1 <- c()
+abundance_comm2 <- c()
+abundance_comm3 <- c()
+abundance_comm4 <- c()
+abundance_comm5 <- c()
+
+shannon_comm1 <- NULL
+shannon_comm2 <- NULL
+shannon_comm3 <- NULL
+shannon_comm4 <- NULL
+shannon_comm5 <- NULL
+
+# For loop, First separate by community, and then sum the vector of the row of that species and put into an abundance vector
+
+for (community in 1:5){
+  if (community == 1){ #in OP
+    for (species in 1:349){
+      abundance_comm1[species] = sum(Arthropod_List[species,5:19])
+    }
+    shannon_comm1 <- diversity(abundance_comm1, index = "shannon")
+  }
+  if (community == 2){ #in OP
+    for (species in 1:349){
+      abundance_comm2[species] = sum(Arthropod_List[species,20:34])
+    }
+    shannon_comm2 <- diversity(abundance_comm2, index = "shannon")
+  }
+  if (community == 3){ #in OP
+    for (species in 1:349){
+      abundance_comm3[species] = sum(Arthropod_List[species,35:49])
+    }
+    shannon_comm3 <- diversity(abundance_comm3, index = "shannon")
+  }
+  if (community == 4){ #in OP
+    for (species in 1:349){
+      abundance_comm4[species] = sum(Arthropod_List[species,50:64])
+    }
+    shannon_comm4 <- diversity(abundance_comm4, index = "shannon")
+  }
+  if (community == 5){ #in OP
+    for (species in 1:349){
+      abundance_comm5[species] = sum(Arthropod_List[species,65:79])
+    }
+    shannon_comm5 <- diversity(abundance_comm5, index = "shannon")
+  }
+}
+```
+
+
+```{r}
+shannon_frame = data.frame(Arthropod_List_Updated$Plot, "Shannon_Diversity")
+
+for (i in 1:75){
+  abundance_vec = Arthropod_List_Updated[i,2:250]
+  diversity = diversity(abundance_vec, index = "shannon")
+  shannon_frame[i,2] = diversity
+}
+```
+
+```{r}
+fixed_arthro = Arthropod_List_Updated[,2:350]
+
+shannon_indices = diversity(fixed_arthro, index = "shannon")
+view(shannon_indices)
+```
+
+```{r}
+final_shannon = data.frame(Treatment = Arthropod_List_Updated$Plot,
+                           Shannon = shannon_indices)
+```
+
+```{r}
+ggplot(final_shannon, aes(x = Treatment, y = Shannon)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  theme_minimal() +
+  labs(title = "Shannon Diversity for each Treatment", x = "Treatment", y = "Shannon Diversity")
+```
+```{r}
+install.packages("lme4")    # For mixed effects models
+install.packages("lmerTest")
+
+library(lme4)
+library(lmerTest)
+```
+
+
+```{r}
+soil_C = Soil_Traits$Soil_C
+soil_N = Soil_Traits$Soil_N
+soil_P = Soil_Traits$Soil_P
+soil_pH = Soil_Traits$Soil_pH
+soil_sal = Soil_Traits$Soil_Salinity
+soil_wat = Soil_Traits$Soil_Water
+
+biomass_above = Plant_Traits$Aboveground_Biomass
+plant_dens = Plant_Traits$Plant_Density
+leaf_N = Plant_Traits$Leaf_N
+leaf_C = Plant_Traits$Leaf_C
+leaf_P = Plant_Traits$Leaf_P
+```
+
+
+```{r}
+model <- glmer(Shannon ~ soil_C + soil_N + soil_P + soil_pH + soil_sal + soil_wat + biomass_above + plant_dens + leaf_N + leaf_C + leaf_P + (1 | Treatment), data = final_shannon)
+
+summary(model)
+
+```
+```{r}
+model <- glmer(Shannon ~ soil_C + soil_N + soil_P + soil_pH + soil_sal + soil_wat + (1 | Treatment), data = final_shannon)
+
+summary(model)
+```
+
+
