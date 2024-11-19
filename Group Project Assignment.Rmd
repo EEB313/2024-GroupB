@@ -1,0 +1,113 @@
+---
+title: "Group Project Assignment"
+author: "Samara Tanz"
+date: "2024-09-26"
+output: pdf_document
+---
+
+```{r}
+install.packages("vegan")
+library(vegan)
+library(tidyverse)
+library(deSolve)
+install.packages("fitdistrplus")
+library(fitdistrplus)
+install.packages("flexsurv")
+library(flexsurv)
+```
+
+```{r}
+Plant_traits <- read.csv("Plant_traits.csv")
+Arthropod_List <- read.csv("Arthropod_List.csv")
+Stable_Isotope <- read.csv("Stable_Isotope.csv")
+Soil_traits <- read.csv("Soil_traits.csv")
+```
+1. Calculating diversity --> Shannon diversity 
+--> using csv file Gaby made that switched the rows and columns of the arthropod list 
+```{r}
+#Manual reformatted version of the Arthropod List data for one species per 
+# column along with one group per row as the "Treatment"
+Species <- read.csv("final_arthro.csv") 
+```
+Jared and Gaby's reformat of group number and Species (1 species per column specified by each row)
+
+```{r}
+#Excluding the first and last column 
+species_data = Species[,2:350] 
+
+#Using the 'diversity()' function to get Shannon diversity 
+shannon_diversity <- diversity(species_data, index = "shannon")
+
+# Reformatting with column names specified 
+final_shannon <- data.frame(Treatment=Species$Plot,
+                            Shannon=shannon_diversity)
+```
+as the first column contains the group name and the last column is species "x" with no data included
+
+View the results --> this is w/o column/row names 
+view(shannon_diversity) #YES
+
+view(final_shannon)
+
+2. Model selection to figure out which to use for our statistics --> is the data normal?
+```{r}
+#Histogram view
+final_shannon |> ggplot(aes(x=Treatment, y=Shannon)) + 
+  geom_bar(stat="identity", fill="skyblue", colour="black")
+```
+```{r}
+#Using the Shapiro test to test normality with p-value
+shapiro.test(shannon_diversity) 
+```
+the data is not normal bc p-value=0.06938 which is >0.05
+... which model is best to use then...?~~>
+uh oh... not normally distributed/significant --> _general linear mixed model_ w AICc scores 
+--> logistic is the best based on the AICc values Jared found:
+
+```{r}
+# Fit a logistic distribution to the Shannon diversity data
+logisticfit <- fitdist(final_shannon$Shannon, "logis")
+
+# Generate a QQ plot for the logistic distribution fit
+qqcomp(list(logisticfit), legendtext = "logistic")
+```
+```{r}
+# fitting different distributions to that Shannon diversity 
+gammafit <- fitdist(final_shannon$Shannon, "gamma")
+weibullfit <- fitdist(final_shannon$Shannon, "weibull")
+logisticfit <- fitdist(final_shannon$Shannon, "logis")
+lnormfit <- fitdist(final_shannon$Shannon, "lnorm")
+gengammafit <- fitdist(final_shannon$Shannon, "gengamma", 
+                       start = list(mu = mean(final_shannon$Shannon), 
+                                    sigma = sd(final_shannon$Shannon), Q = 0))
+
+```
+```{r}
+# Extract AIC and BIC for each distribution
+aic_bic_table <- data.frame(
+  Distribution = c("Gamma", "Weibull", "Logistic", "Lognormal", "Generalized Gamma"),
+  AIC = c(gammafit$aic, weibullfit$aic, logisticfit$aic, lnormfit$aic, gengammafit$aic),
+  BIC = c(gammafit$bic, weibullfit$bic, logisticfit$bic, lnormfit$bic, gengammafit$bic))
+```
+
+```{r}
+# Display AIC and BIC values for comparison
+print(aic_bic_table)
+```
+
+general mixed vs mixed --> general means not linear, mixed means random and not mixed 
+--> general means it can be normal/non-normal (rather than w mixed model it has to be normal)
+--> recall the beta stuff (beta0 + beta1 + beta2), each beta is a coefficient for each variable we have
+  -> i.g 'plant traits' and 'soil traits' consist of a lot of variables, we want to find the best coefficient to represent the data (recall: lmr)
+
+
+the data being logistic (bc of the test we ran on it) makes us use _"glmr"_
+
+3. Create a general LMM (linear mixed model)
+
+what we're gonna be asking ~> are plant or soil traits the cause of the differences we see?
+--> we'll test this out by measuring each of the traits in plant and soil documents 
+
+4. Interpret to see which plant/soil traits/factors are most significant 
+(2 models: soil and plants)
+
