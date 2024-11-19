@@ -9,6 +9,9 @@ require(tidyverse)
 require(deSolve)
 require(vegan)
 require(car)
+require(rgl)
+require(ggfortify)
+
 ```
 
 ```{r}
@@ -123,7 +126,10 @@ ggplot(final_shannon, aes(x = Treatment, y = Shannon)) +
 ```{r}
 install.packages("lme4")    # For mixed effects models
 install.packages("lmerTest")
+```
 
+
+```{r}
 library(lme4)
 library(lmerTest)
 ```
@@ -146,15 +152,106 @@ leaf_P = Plant_Traits$Leaf_P
 
 
 ```{r}
-model <- glmer(Shannon ~ soil_C + soil_N + soil_P + soil_pH + soil_sal + soil_wat + biomass_above + plant_dens + leaf_N + leaf_C + leaf_P + (1 | Treatment), data = final_shannon)
+final_shannon$soil_C <- soil_C
+final_shannon$soil_N <- soil_N
+final_shannon$soil_P <- soil_P
+final_shannon$soil_pH <- soil_pH
+final_shannon$soil_sal <- soil_sal
+final_shannon$soil_wat <- soil_wat
 
-summary(model)
+final_shannon$biomass_above <- biomass_above
+final_shannon$plant_dens <- plant_dens
+final_shannon$leaf_N <- leaf_N
+final_shannon$leaf_C <- leaf_C
+final_shannon$leaf_P <- leaf_P
 
 ```
+
 ```{r}
-model <- glmer(Shannon ~ soil_C + soil_N + soil_P + soil_pH + soil_sal + soil_wat + (1 | Treatment), data = final_shannon)
-
-summary(model)
+write.csv(final_shannon, "final_shannon.csv")
 ```
 
+
+```{r}
+# Example: Group treatments into broader categories
+final_shannon$Treatment_grouped <- ifelse(startsWith(final_shannon$Treatment, "OP"), "OP",
+                                          ifelse(startsWith(final_shannon$Treatment, "RP"), "RP",
+                                                 ifelse(startsWith(final_shannon$Treatment, "TP"), "TP",
+                                                        ifelse(startsWith(final_shannon$Treatment, "IS"), "IS",
+                                                               ifelse(startsWith(final_shannon$Treatment, "PS"), "PS", "Other")))))
+
+# Fit the model with grouped Treatment
+model2 <- lmer(Shannon ~ Treatment_grouped, data = final_shannon, family = Gamma(link = "log"))
+summary(model2)
+```
+
+
+```{r}
+model <- glmer(Shannon ~ soil_sal + biomass_above + plant_dens + leaf_N + (1 | Treatment), data = final_shannon)
+summary(model)
+
+run a PCA on all the variables - 
+```
+
+```{r}
+final_shannon$soil_C <- as.numeric(as.character(final_shannon$soil_C))
+final_shannon$soil_N <- as.numeric(as.character(final_shannon$soil_N))
+final_shannon$soil_P <- as.numeric(as.character(final_shannon$soil_P))
+final_shannon$soil_sal <- as.numeric(as.character(final_shannon$soil_sal))
+final_shannon$soil_wat <- as.numeric(as.character(final_shannon$soil_wat))
+final_shannon$biomass_above <- as.numeric(as.character(final_shannon$biomass_above))
+final_shannon$plant_dens <- as.numeric(as.character(final_shannon$plant_dens))
+final_shannon$leaf_N <- as.numeric(as.character(final_shannon$leaf_N))
+final_shannon$leaf_C <- as.numeric(as.character(final_shannon$leaf_C))
+final_shannon$leaf_P <- as.numeric(as.character(final_shannon$leaf_P))
+```
+
+```{r}
+is.na(final_shannon$soil_C)
+is.na(final_shannon$soil_N)
+is.na(final_shannon$soil_P)
+is.na(final_shannon$soil_sal)
+is.na(final_shannon$soil_wat)
+is.na(final_shannon$biomass_above)
+is.na(final_shannon$plant_dens)
+is.na(final_shannon$leaf_N)
+is.na(final_shannon$leaf_C)
+is.na(final_shannon$leaf_P)
+```
+
+
+
+```{r}
+noNA_final_shannon <- filter(final_shannon, !is.na(final_shannon$leaf_N))
+```
+
+
+```{r}
+mean(noNA_final_shannon$leaf_N)
+```
+
+```{r}
+read.csv("final_shannon_noNA.csv") -> final_shannon_UPDATED
+```
+
+
+```{r}
+par(mfrow=c(1,1))
+
+# can look at all variables together
+# can see that all morphological traits are highly linearly and positively correlated
+# ie species with large masses ALSO have high wing length and high tarsus length (lower leg bone, the bone below what looks like a backwards facing knee)
+pairs(final_shannon_UPDATED[, c("soil_C", "soil_N", "soil_P", "soil_pH", 
+                                    "soil_sal", "soil_wat", "biomass_above", 
+                                    "plant_dens", "leaf_N", "leaf_C", "leaf_P")])
+```
+
+
+```{r}
+cor_matrix <- cor(final_shannon[, c("soil_C", "soil_N", "soil_P", "soil_pH", 
+                                    "soil_sal", "soil_wat", "biomass_above", 
+                                    "plant_dens", "leaf_N", "leaf_C", "leaf_P")], 
+                  use = "pairwise.complete.obs")
+print(cor_matrix)
+```
 
