@@ -1,0 +1,363 @@
+---
+title: "Final Project Master Code"
+output: pdf_document
+date: "2024-11-14"
+---
+
+```{r, message=F, warning=F}
+require(tidyverse)
+require(deSolve)
+require(vegan)
+require(car)
+require(rgl)
+require(ggfortify)
+require(fitdistrplus)
+
+options(rgl.useNULL = TRUE) 
+rgl::setupKnitr(autoprint = TRUE)
+```
+
+```{r}
+read_csv("Arthropod_List.csv") -> Arthropod_List
+
+read_csv("Plant_Traits.csv") -> Plant_Traits
+
+read_csv("Soil_Traits.csv") -> Soil_Traits
+
+read_csv("Stable_Isotopes.csv") -> Stable_Isotopes
+
+read_csv("final_arthro.csv") -> Arthropod_List_Updated
+
+```
+
+## FINAL SHANNON DIVERSITY CALCULATION
+```{r}
+fixed_arthro = Arthropod_List_Updated[,2:350]
+
+shannon_indices = diversity(fixed_arthro, index = "shannon")
+view(shannon_indices)
+```
+
+```{r}
+final_shannon = data.frame(Treatment = Arthropod_List_Updated$Plot,
+                           Shannon = shannon_indices)
+```
+
+#Histogram of Shannon Diversity -- kinda normal lookin' ?!
+```{r}
+ggplot(final_shannon, aes(Shannon)) +
+  geom_histogram(binwidth = 0.05, alpha = 0.7, colour="white")
+```
+
+#Another way to histogram... still kinda normal looking?!?!
+```{r}
+hist(final_shannon$Shannon, probability = TRUE, col = "lightblue", border = "black", breaks = 25)
+lines(density(final_shannon$Shannon), col = "red", lwd = 2)  # Adds a density curve
+```
+
+#Distribution of Shannon Diversity against Treatment type
+```{r}
+ggplot(final_shannon, aes(x = Treatment, y = Shannon)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  theme_minimal() +
+  labs(title = "Shannon Diversity for each Treatment", x = "Treatment", y = "Shannon Diversity")
+```
+
+# Group Treatments into Communities
+```{r}
+final_shannon$Community <- ifelse(startsWith(final_shannon$Treatment, "OP"), "OP",
+                                          ifelse(startsWith(final_shannon$Treatment, "RP"), "RP",
+                                                 ifelse(startsWith(final_shannon$Treatment, "TP"), "TP",
+                                                        ifelse(startsWith(final_shannon$Treatment, "IS"), "IS",
+                                                               ifelse(startsWith(final_shannon$Treatment, "PS"), "PS", "Other")))))
+```
+
+# Move Communities column to the left to be beside the Treatment column...
+```{r}
+final_shannon <- final_shannon[, c("Treatment", "Community", "Shannon")]
+```
+
+#Distribution of Shannon Diversity against Community type
+```{r}
+ggplot(final_shannon, aes(x = Community, y = Shannon)) +
+  geom_bar(stat = "identity", fill = "yellowgreen", color = "black") +
+  theme_minimal() +
+  labs(title = "Shannon Diversity for each Community", x = "Community", y = "Shannon Diversity")
+```
+
+# Add all the predictor variable columns (soil and plant traits) onto final_shannon...
+```{r}
+final_shannon$soil_C <- Soil_Traits$Soil_C
+final_shannon$soil_N <- Soil_Traits$Soil_N
+final_shannon$soil_P <- Soil_Traits$Soil_P
+final_shannon$soil_pH <- Soil_Traits$Soil_pH
+final_shannon$soil_sal <- Soil_Traits$Soil_Salinity
+final_shannon$soil_wat <- Soil_Traits$Soil_Water
+
+final_shannon$biomass_above <- Plant_Traits$Aboveground_Biomass
+final_shannon$plant_dens <- Plant_Traits$Plant_Density
+final_shannon$leaf_N <- Plant_Traits$Leaf_N
+final_shannon$leaf_C <- Plant_Traits$Leaf_C
+final_shannon$leaf_P <- Plant_Traits$Leaf_P
+```
+
+# Make sure all the number columns are actually numeric!!
+```{r}
+final_shannon[, 3:14] <- lapply(final_shannon[, 3:14], as.numeric)
+```
+
+# OPTIONAL: Save the final_shannon dataframe as a csv file for sharing and future edits...
+```{r}
+write.csv(final_shannon, "final_shannon.csv")
+```
+
+### OP14 and OP15 have NULL leaf_N values -> so for now, we're replacing them with the mean...
+# First filter out the data to exclude the 2 rows with "n/a" leaf_N values:
+```{r}
+noNA_FS <- filter(final_shannon, !is.na(final_shannon$leaf_N))
+```
+
+# Then replace the 2 cells with the mean of the leaf_N column!...
+```{r}
+replaced_FS <- final_shannon
+
+replaced_FS[replaced_FS$Treatment == "OP14", "leaf_N"] <- 
+  round(mean(noNA_FS$leaf_N), 2)
+
+replaced_FS[replaced_FS$Treatment == "OP15", "leaf_N"] <- 
+  round(mean(noNA_FS$leaf_N), 2)
+
+```
+
+## Alternative method
+Find the mean of the leaf_N column > manually paste that mean value in the NULL cells in final_shannon.csv, save as new file final_shannon_noNA.csv", and read that file into R...
+```{r}
+# mean(noNA_final_shannon$leaf_N) # mean of leaf_N = 18.34411 round to 18.34
+
+# read.csv("final_shannon_noNA.csv") -> final_shannon_UPDATED2
+```
+
+# Renaming master data frame to a shorter name bc I will have to use it over and over again in log-likelihood evalutors!...
+```{r}
+data <- replaced_FS
+```
+
+#METE! AM I DOING THE CORRECT RANGE FOR MEAN, SD, SHAPE = ??, RATE = ??, LAMBDA = SHAPE = ??, MU = MEAN
+
+### MAKING RANGES OF PARAMETER COMBONINATIONS FOR EACH DISTRIBUTION
+
+## dgamma parameters:
+- shape: Controls the shape of the distribution. Low values -> Highly right-skewed. High values -> Symmetric or normal-like.
+- scale: Scales the spread of the data (mean and variance). Larger values result in broader distributions.
+
+## inverse gaussian parameters:
+- mu (mean): Determines the central tendency of the distribution. It should align with the average value of your data.
+- lambda (shape): Controls the variance and skewness. Larger implies less skewness and lower variance.
+
+```{r}
+# MLE: -19.28128	3.43	0.31
+
+norm_combos <- expand.grid(mean = seq(2.4, 4.2, 0.01),
+                            sd = seq(0.15, 0.7, 0.01))
+```
+
+```{r}
+# MLE: -21.03414	98	0.035
+
+gamma_combos <- expand.grid(shape = seq(98, 100, 0.001),
+                            scale = seq(0.03, 0.04, 0.001))
+
+```
+
+```{r}
+# MLE: -21.50412	3.43	381.81
+
+invgaus_combos <- expand.grid(mu = seq(2.4, 4.2, 0.01),
+                              lambda = seq(375, 385, 0.01))
+	
+```
+
+## LOG-LIKELIHOOD EVALUATORS
+```{r}
+norm_loglik <- function(x = data$Shannon, mean, sd){
+  return (sum(log(dnorm(x = x, mean = mean, sd = sd))))
+}
+```
+
+```{r}
+gamma_loglik <- function(x = data$Shannon, shape, scale){
+  return (sum(log(dgamma(x = x, shape = shape, scale = scale))))
+}
+```
+
+```{r}
+invgaus_loglik <- function(x = data$Shannon, mu, lambda){
+  return (sum(log(
+    sqrt(lambda/(2*pi*x^3)) * exp((-lambda*(x-mu)^2)/(2*x*mu^2))
+    )))
+}
+```
+
+```{r}
+
+LogLik_norm <- c() # empty log-likelihoods vector for NORMAL
+
+for (i in 1:nrow(norm_combos)){
+  LogLik_norm[i] <- norm_loglik(mean = norm_combos$mean[i],
+                                sd = norm_combos$sd[i])
+}
+
+LLs_norm <- data.frame(LogLik_Norm = LogLik_norm,
+                       mean = norm_combos$mean,
+                       sd = norm_combos$sd)
+
+```
+
+```{r}
+
+LogLik_gamma <- c() # empty log-likelihoods vector for GAMMA
+
+for (i in 1:nrow(gamma_combos)){
+  LogLik_gamma[i] <- gamma_loglik(shape = gamma_combos$shape[i],
+                                  scale = gamma_combos$scale[i])
+}
+
+LLs_gamma <- data.frame(LogLik_Gamma = LogLik_gamma,
+                       shape = gamma_combos$shape,
+                       scale = gamma_combos$scale)
+
+```
+
+```{r}
+
+LogLik_invgaus <- c() # empty log-likelihoods vector for INVERSE GAUSSIAN
+
+for (i in 1:nrow(invgaus_combos)){
+  LogLik_invgaus[i] <- invgaus_loglik(mu = invgaus_combos$mu[i],
+                                      lambda = invgaus_combos$lambda[i])
+}
+
+LLs_invgaus <- data.frame(LogLik_InvGaus = LogLik_invgaus,
+                          mu = invgaus_combos$mu,
+                          lambda = invgaus_combos$lambda)
+
+```
+
+```{r}
+ggplot(LLs_norm, aes(x = mean, y = LogLik_Norm)) + geom_line()
+ggplot(LLs_norm, aes(x = sd, y = LogLik_Norm)) + geom_line()
+MLE_norm <- LLs_norm %>% subset(LogLik_Norm == max(LogLik_Norm))
+MLE_norm
+```
+
+```{r}
+ggplot(LLs_gamma, aes(x = shape, y = LogLik_Gamma)) + geom_line()
+ggplot(LLs_gamma, aes(x = scale, y = LogLik_Gamma)) + geom_line()
+MLE_gamma <- LLs_gamma %>% subset(LogLik_Gamma == max(LogLik_Gamma))
+MLE_gamma
+```
+
+```{r}
+ggplot(LLs_invgaus, aes(x = mu, y = LogLik_InvGaus)) + geom_line()
+ggplot(LLs_invgaus, aes(x = lambda, y = LogLik_InvGaus)) + geom_line()
+MLE_invgaus <- LLs_invgaus %>% subset(LogLik_InvGaus == max(LogLik_InvGaus))
+MLE_invgaus
+```
+
+# Find which varaiables are linearly and positively correlated...
+```{r}
+par(mfrow=c(1,1))
+
+pairs(data[, c("soil_C", "soil_N", "soil_P", "soil_pH", "soil_sal", "soil_wat", 
+               "biomass_above", "plant_dens", "leaf_N", "leaf_C", "leaf_P")])
+```
+
+#Test for co-linearality?
+```{r}
+cor_matrix <- cor(data[, c("soil_C", "soil_N", "soil_P", "soil_pH", "soil_sal",
+                           "soil_wat", "biomass_above", "plant_dens", "leaf_N", 
+                           "leaf_C", "leaf_P")], 
+                  use = "pairwise.complete.obs")
+print(cor_matrix)
+```
+
+### PCA TIME!
+```{r}
+pca.out <- prcomp(data[, c("soil_C", "soil_N", "soil_P", "soil_pH", "soil_sal", 
+                           "soil_wat", "biomass_above", "plant_dens", "leaf_N", 
+                           "leaf_C", "leaf_P")], scale.=T)
+```
+
+#This is not working for me :(
+```{r}
+#as.data.frame(pca.out$var$contrib)
+```
+
+# PC1: (1) soil_N (-0.3543157) (2) soil_wat (-0.3536549) (3) soil_pH (0.3370312) (4) biomass_above (0.3269548) (5) soil_C (-0.3267151)
+# PC2: (1) soil_C (0.44891398) (2) plant_dens (-0.40295140) (3) soil_sal (0.39164170) (4) soil_N (0.37709659)
+```{r}
+pca.out
+```
+
+```{r}
+summary(pca.out)
+```
+
+```{r}
+head(pca.out$rotation)
+```
+
+```{r}
+autoplot(pca.out, x=1,y=2,
+         data=final_shannon_UPDATED, 
+         colour="Treatment_grouped",
+         frame=TRUE) +
+  theme_classic()
+```
+
+#Things to do after PCA: regression on PC1, PC2, and interaction!! Discriminate!
+
+### FITTING REGRESSION MODELS!
+```{r}
+# Fit the model with grouped Treatment
+model2 <- lmer(Shannon ~ Treatment_grouped, data = final_shannon, family = Gamma(link = "log"))
+summary(model2)
+
+model <- glmer(Shannon ~ soil_sal + biomass_above + plant_dens + leaf_N + (1 | Treatment), data = final_shannon)
+summary(model)
+
+METE: run a PCA on all the variables ...
+```
+
+```{r}
+text <- dnorm(data$Shannon, mean = 3.43, sd = 0.6)
+```
+
+```{r}
+sd(data$Shannon)/2
+```
+
+### EXTRA STUFF
+
+```{r}
+write.csv(data, "ULTIMATE_DATAFRAME.csv")
+```
+
+# Visualizing the probability density distributions with one combination of parameters...
+```{r}
+# GAMMA
+gamma_prob_dist <- dgamma(data$Shannon, shape = 1, scale = 5)
+
+hist(gamma_prob_dist, probability = TRUE, col = "lightblue", border = "black")
+lines(density(gamma_prob_dist), col = "red", lwd = 2)  # Adds a density curve
+```
+
+```{r}
+#NORMAL
+norm_prob_dist <- dnorm(data$Shannon, mean = 3.43, sd = 0.6)
+```
+
+```{r}
+hist(norm_prob_dist, probability = TRUE, col = "lightblue", border = "black")
+lines(density(norm_prob_dist), col = "red", lwd = 2)  # Adds a density curve
+```
