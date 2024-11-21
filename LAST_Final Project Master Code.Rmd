@@ -4,6 +4,7 @@ output: pdf_document
 date: "2024-11-14"
 ---
 
+# Loading packages
 ```{r, message=F, warning=F}
 require(tidyverse)
 require(deSolve)
@@ -17,19 +18,18 @@ options(rgl.useNULL = TRUE)
 rgl::setupKnitr(autoprint = TRUE)
 ```
 
+# Loading csv files
 ```{r}
+#Provided original csv files (separated sheets from the master excel file) 
+# column names were edited for simplicity sake
 read_csv("Arthropod_List.csv") -> Arthropod_List
 
 read_csv("Plant_Traits.csv") -> Plant_Traits
 
 read_csv("Soil_Traits.csv") -> Soil_Traits
 
-read_csv("Stable_Isotopes.csv") -> Stable_Isotopes
-
-#read_csv("final_arthro.csv") -> Arthropod_List_Updated
-
 ```
-## REARRANGE ARTHROPOD_LIST DATA FRAME SO THAT EACH SPECIES IS A COLUMN AND EACH TREATMENT IS A ROW
+## Rearraged Arthropod_List dataframe (each species is a column, each threatment is a row)
 ```{r}
 teatment_cols <- Arthropod_List[,5:79]
 species_col <- Arthropod_List[c("Species")]
@@ -57,33 +57,40 @@ fixed_arthro <- AL_wide
 ```
 
 
-## FINAL SHANNON DIVERSITY CALCULATION
+# Shannon Diversity Calculations
 ```{r}
+#Excluding the first and last column (as they d not contain data)
 for_shannon = fixed_arthro[,2:350]
 
+#Shannon diversity 
 shannon_indices = diversity(for_shannon, index = "shannon")
-view(shannon_indices)
 ```
 
 ```{r}
+#Reformatting with column names specified 
 final_shannon = data.frame(Treatment = fixed_arthro$Treatment,
                            Shannon = shannon_indices)
 ```
 
-#Histogram of Shannon Diversity -- kinda normal lookin' ?!
+## Histogram of Shannon Diversity 
+Preliminary to determining distribution type.
 ```{r}
 ggplot(final_shannon, aes(Shannon)) +
   geom_histogram(binwidth = 0.05, alpha = 0.7, colour="white")
 ```
 
-#Another way to histogram... still kinda normal looking?!?!
+## Another way to histogram... looking kind of normal..
 ```{r}
 hist(final_shannon$Shannon, probability = TRUE, col = "lightblue", border = "black", breaks = 25)
 lines(density(final_shannon$Shannon), col = "red", lwd = 2)  # Adds a density curve
 ```
+This is normal looking, however we need to determine distribution type in order to make the correct analysis and conclusions about our findings...
 
-# Group Treatments into Communities
+#Data wrangling 
+##Group Treatments into Communities
 ```{r}
+#Data is separated by into 75 treatments -> groups with 15 treatments each
+#To draw better conclusions, we need to group by group
 final_shannon$Community <- ifelse(startsWith(final_shannon$Treatment, "OP"), "OP",
                                           ifelse(startsWith(final_shannon$Treatment, "RP"), "RP",
                                                  ifelse(startsWith(final_shannon$Treatment, "TP"), "TP",
@@ -91,12 +98,12 @@ final_shannon$Community <- ifelse(startsWith(final_shannon$Treatment, "OP"), "OP
                                                                ifelse(startsWith(final_shannon$Treatment, "PS"), "PS", "Other")))))
 ```
 
-# Move Communities column to the left to be beside the Treatment column...
+Rearranging columns so "Community" is beside "Treatment"
 ```{r}
 final_shannon <- final_shannon[, c("Treatment", "Community", "Shannon")]
 ```
 
-#Distribution of Shannon Diversity against Community type
+Visualization of Shannon diversity for each community 
 ```{r}
 ggplot(final_shannon, aes(x = Community, y = Shannon)) +
   geom_bar(stat = "identity", fill = "yellowgreen", color = "black") +
@@ -104,7 +111,8 @@ ggplot(final_shannon, aes(x = Community, y = Shannon)) +
   labs(title = "Shannon Diversity for each Community", x = "Community", y = "Shannon Diversity")
 ```
 
-# Add all the predictor variable columns (soil and plant traits) onto final_shannon...
+
+## Add all the predictor variable columns (soil and plant traits) onto final_shannon...
 ```{r}
 final_shannon$soil_C <- Soil_Traits$Soil_C
 final_shannon$soil_N <- Soil_Traits$Soil_N
@@ -120,65 +128,49 @@ final_shannon$leaf_C <- Plant_Traits$Leaf_C
 final_shannon$leaf_P <- Plant_Traits$Leaf_P
 ```
 
-# Make sure all the number columns are actually numeric!!
+## Making sure all the number columns are numeric!!
 Note that this also converts 'n/a' cells into NULL -- we will have to replace this later with an estimate!
 ```{r}
 final_shannon[, 3:14] <- lapply(final_shannon[, 3:14], as.numeric)
 ```
 
-# OPTIONAL: Save the final_shannon dataframe as a csv file for sharing and future edits...
+###Saving the final_shannon dataframe as a csv file for sharing and future edits...
 ```{r}
 write.csv(final_shannon, "final_shannon.csv")
 ```
 
-# OP14 and OP15 have NULL leaf_N values -> so for now, we're replacing them with the mean of their community...
+##Filtering data for our final dataset
+OP14 and OP15 have NULL leaf_N values (due to equipment failure) -> here, we replace them with the mean of their community instead...
 ```{r}
 replaced_FS <- final_shannon
-
-replaced_FS[replaced_FS$Treatment == "OP14", "leaf_N"] <- 16.507
-replaced_FS[replaced_FS$Treatment == "OP15", "leaf_N"] <- 16.507
 ```
 
-# Renaming master data frame to a shorter name bc I will have to use it over and over again in log-likelihood evalutors!...
+```{r}
+#First filter out the data to involve only the OP community and then exclude the 2 rows with "n/a" leaf_N values:
+
+final_shannon %>%
+  filter(final_shannon$Community == "OP",
+         !is.na(final_shannon$leaf_N)) -> OPonly_noNA_FS
+```
+
+
+```{r}
+# Replacing the 2 cells with the mean of the OP'S leaf_N column
+replaced_FS <- final_shannon
+
+replaced_FS[replaced_FS$Treatment == "OP14", "leaf_N"] <- 
+  mean(OPonly_noNA_FS$leaf_N)
+replaced_FS[replaced_FS$Treatment == "OP15", "leaf_N"] <- 
+  mean(OPonly_noNA_FS$leaf_N)
+```
+
+###Renaming master data frame to a shorter name bc I will have to use it over and over again in log-likelihood evalutors!
 ```{r}
 data <- replaced_FS
 ```
 
-### MAKING RANGES OF PARAMETER COMBONINATIONS FOR EACH DISTRIBUTION
-
-## dgamma parameters:
-- shape: Controls the shape of the distribution. Low values -> Highly right-skewed. High values -> Symmetric or normal-like.
-- scale: Scales the spread of the data (mean and variance). Larger values result in broader distributions.
-
-## inverse gaussian parameters:
-- mu (mean): Determines the central tendency of the distribution. It should align with the average value of your data.
-- lambda (shape): Controls the variance and skewness. Larger implies less skewness and lower variance.
-
-```{r}
-# MLE: LogLik = -19.28128, mean = 3.43, sd = 0.31
-
-norm_combos <- expand.grid(mean = seq(2.4, 4.2, 0.01),
-                            sd = seq(0.15, 0.7, 0.01))
-```
-
-```{r}
-# MLE: LogLik = -21.03414, shape = 98, scale = 0.035
-
-gamma_combos <- expand.grid(shape = seq(98, 100, 0.001),
-                            scale = seq(0.03, 0.04, 0.001))
-
-```
-
-```{r}
-# MLE: LogLik = -21.50412, mu =	3.43, lambda = 381.81
-
-invgaus_combos <- expand.grid(mu = seq(2.4, 4.2, 0.01),
-                              lambda = seq(375, 385, 0.01))
-	
-```
-
-### METE'S RANGES
-
+# Making ranges of parameter combinations for each distribution 
+## MLE: We test for normal, gamma, and inverse gaussian because they are the only distribution types that can reasonably fit our data and are generally accepted in a generalized linear mixed model! 
 ```{r}
 norm_combos <- expand.grid(mean = seq(2.4, 4.2, 0.01),
                             sd = seq(0.15, 0.7, 0.01))
@@ -191,7 +183,7 @@ invgaus_combos <- expand.grid(mu = seq(2, 6, 0.05),
 ```
 
 
-## LOG-LIKELIHOOD EVALUATORS
+#Log-Likelihood evalutions 
 ```{r}
 norm_loglik <- function(x = data$Shannon, mean, sd){
   return (sum(log(dnorm(x = x, mean = mean, sd = sd))))
@@ -278,7 +270,7 @@ MLE_invgaus <- LLs_invgaus %>% subset(LogLik_InvGaus == max(LogLik_InvGaus))
 MLE_invgaus
 ```
 
-# Find which varaiables are linearly and positively correlated...
+# Find which varaiables are linearly and positively correlated
 ```{r}
 par(mfrow=c(1,1))
 
@@ -295,20 +287,13 @@ cor_matrix <- cor(data[, c("soil_C", "soil_N", "soil_P", "soil_pH", "soil_sal",
 print(cor_matrix)
 ```
 
-### PCA TIME!
+#PCA 
 ```{r}
 pca.out <- prcomp(data[, c("soil_C", "soil_N", "soil_P", "soil_pH", "soil_sal", 
                            "soil_wat", "biomass_above", "plant_dens", "leaf_N", 
                            "leaf_C", "leaf_P")], scale.=T)
 ```
 
-#This is not working for me :(
-```{r}
-#as.data.frame(pca.out$var$contrib)
-```
-
-# PC1: (1) soil_N (-0.3543157) (2) soil_wat (-0.3536549) (3) soil_pH (0.3370312) (4) biomass_above (0.3269548) (5) soil_C (-0.3267151)
-# PC2: (1) soil_C (0.44891398) (2) plant_dens (-0.40295140) (3) soil_sal (0.39164170) (4) soil_N (0.37709659)
 ```{r}
 pca.out
 ```
@@ -320,7 +305,7 @@ summary(pca.out)
 ```{r}
 head(pca.out$rotation)
 ```
-
+## Visualized PCA
 ```{r}
 autoplot(pca.out, x=1,y=2,
          data=data, 
@@ -329,4 +314,4 @@ autoplot(pca.out, x=1,y=2,
   theme_classic()
 ```
 
-#Things to do after PCA: regression on PC1, PC2, and interaction!! Discriminate!
+#Things to do after PCA: regression on PC1, PC2, and interaction!! Discriminate!...   
