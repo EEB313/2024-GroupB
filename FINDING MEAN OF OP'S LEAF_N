@@ -1,0 +1,16 @@
+# First filter out the data to involve only the OP community and then exclude the 2 rows with "n/a" leaf_N values:
+```{r}
+final_shannon %>%
+  filter(final_shannon$Community == "OP",
+         !is.na(final_shannon$leaf_N)) -> OPonly_noNA_FS
+```
+
+# Then replace the 2 cells with the mean of the OP'S leaf_N column!...
+```{r}
+replaced_FS <- final_shannon
+
+replaced_FS[replaced_FS$Treatment == "OP14", "leaf_N"] <- 
+  mean(OPonly_noNA_FS$leaf_N)
+replaced_FS[replaced_FS$Treatment == "OP15", "leaf_N"] <- 
+  mean(OPonly_noNA_FS$leaf_N)
+```
