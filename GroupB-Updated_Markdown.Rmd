@@ -1,0 +1,375 @@
+---
+title: "GroupB-NEW"
+author: "Samara Tanz"
+date: "2024-11-20"
+output: pdf_document
+---
+# Loading packages
+```{r}
+library(vegan)
+library(tidyverse)
+library(deSolve)
+library(fitdistrplus)
+library(flexsurv)
+library(lme4)
+library(car)
+library(rgl)
+library(ggfortify)
+
+options(rgl.useNULL = TRUE) 
+rgl::setupKnitr(autoprint = TRUE)
+```
+
+# Loading csv files
+```{r}
+#Provided original csv files (separated sheets from the master excel file)
+Plant_traits <- read.csv("Plant_traits.csv")
+Arthropod_List <- read.csv("Arthropod_List.csv")
+Stable_Isotope <- read.csv("Stable_Isotope.csv")
+Soil_traits <- read.csv("Soil_traits.csv")
+```
+
+## Creating New Arthropod list
+```{r}
+#Updated arthropod list which switched the rows and columns of treatment and 
+# species while neglecting every other irrelevant column 
+
+new_insect <- Arthropod_List  %>% 
+  gather(var, val, 2:ncol(Arthropod_List)) %>% 
+  spread(Species, val)
+  
+
+Arthro_List_update <-Arthropod_List [-c(1,2,3), ]
+```
+```{r}
+write.csv(Arthro_List_update, 'New_insect.csv')
+
+test_data <- read.csv("final_arthro.csv")
+```
+
+
+```{r}
+Arthro_List_update <- read.csv("final_arthro.csv") 
+```
+
+
+# Shannon Diversity Calculations
+```{r}
+#Excluding the first and last column (as they d not contain data)
+fixed_arthro = Arthro_List_update[,2:350] 
+
+#Shannon diversity 
+shannon_indicies <- diversity(fixed_arthro, index = "shannon")
+
+#Reformatting with column names specified 
+final_shannon1 <- data.frame(Treatment=Arthro_List_update$Plot,
+                            Shannon=shannon_indicies)
+```
+
+# Histogram view 
+Preliminary to determining distribution type.
+```{r}
+# With added density curve
+hist(final_shannon1$Shannon, probability = TRUE, col = "lightblue", border = "black", breaks = 25)
+lines(density(final_shannon1$Shannon), col = "red", lwd = 2)  # Adds a density curve
+```
+This is normal looking, however we need to determine distribution type in order to make the correct analysis and conclusions about our findings...
+
+#Organizing
+##Group Treatments into Communities
+```{r}
+#Data is separated by into 75 treatments -> groups with 15 treatments each
+#To draw better conclusions, we need to group by group
+final_shannon1$Community <- ifelse(startsWith(final_shannon1$Treatment, "OP"), "OP",
+                                          ifelse(startsWith(final_shannon1$Treatment, "RP"), "RP",
+                                                 ifelse(startsWith(final_shannon1$Treatment, "TP"), "TP",
+                                                        ifelse(startsWith(final_shannon1$Treatment, "IS"), "IS",
+                                                               ifelse(startsWith(final_shannon1$Treatment, "PS"), "PS", "Other")))))
+
+#Rearranging columns so "Community" is beside "Treatment"
+shannon_reg <- final_shannon1[, c("Treatment", "Community", "Shannon")]
+```
+
+```{r}
+#Visualization of Shannon diversity for each community 
+ggplot(shannon_reg, aes(x = Community, y = Shannon)) +
+  geom_bar(stat = "identity", fill = "yellowgreen", color = "black") +
+  theme_minimal() +
+  labs(title = "Shannon Diversity for each Community", x = "Community", y = "Shannon Diversity")
+```
+#Add all the predictor variable columns (soil and plant traits) onto final_shannon...
+```{r}
+final_shannon1 = data.frame(Treatment = Arthro_List_update$Plot,
+                           Shannon = shannon_indicies)
+```
+
+..... HELP
+
+```{r}
+#Save dataframe as a csv file for sharing and future edits...
+write.csv(final_shannon1, "final_shannon.csv")
+```
+
+#Filtering data for our final dataset
+```{r}
+#OP14 and OP15 have N/A for leafN (their had a technical error) 
+noNA_FS <- filter(final_shannon, !is.na(final_shannon$leaf_N))
+```
+```{r}
+#Replacing those cells with the mean of the total leafN 
+data <- final_shannon 
+
+data[data$Treatment == "OP14", "leaf_N"] <- 
+  round(mean(noNA_FS$leaf_N), 2)
+
+data[data$Treatment == "OP15", "leaf_N"] <- 
+  round(mean(noNA_FS$leaf_N), 2)
+```
+
+#Determining distribution type
+We test for normal, gamma, and inverse gaussian becauseADD SOMETHING HERE 
+```{r}
+#Normal
+# MLE: LogLik = -19.28128, mean = 3.43, sd = 0.31
+
+norm_combos <- expand.grid(mean = seq(2.4, 4.2, 0.01),
+                            sd = seq(0.15, 0.7, 0.01))
+```
+
+```{r}
+#Gamma
+# MLE: LogLik = -21.03414, shape = 98, scale = 0.035
+
+gamma_combos <- expand.grid(shape = seq(98, 100, 0.001),
+                            scale = seq(0.03, 0.04, 0.001))
+
+```
+
+```{r}
+#Inverse Gaussian 
+# MLE: LogLik = -21.50412, mu =	3.43, lambda = 381.81
+
+invgaus_combos <- expand.grid(mu = seq(2.4, 4.2, 0.01),
+                              lambda = seq(375, 385, 0.01))
+	
+```
+
+## Log-Likelihood evaluators
+```{r}
+norm_loglik <- function(x = data$Shannon, mean, sd){
+  return (sum(log(dnorm(x = x, mean = mean, sd = sd))))
+}
+
+
+gamma_loglik <- function(x = data$Shannon, shape, scale){
+  return (sum(log(dgamma(x = x, shape = shape, scale = scale))))
+}
+
+
+invgaus_loglik <- function(x = data$Shannon, mu, lambda){
+  return (sum(log(
+    sqrt(lambda/(2*pi*x^3)) * exp((-lambda*(x-mu)^2)/(2*x*mu^2))
+    )))
+}
+```
+
+```{r}
+
+LogLik_norm <- c() # empty log-likelihoods vector for NORMAL
+
+for (i in 1:nrow(norm_combos)){
+  LogLik_norm[i] <- norm_loglik(mean = norm_combos$mean[i],
+                                sd = norm_combos$sd[i])
+}
+
+LLs_norm <- data.frame(LogLik_Norm = LogLik_norm,
+                       mean = norm_combos$mean,
+                       sd = norm_combos$sd)
+
+LLs_norm |> subset(LogLik_Norm == max(LogLik_Norm)) -> MLENorm
+```
+
+```{r}
+
+LogLik_gamma <- c() # empty log-likelihoods vector for GAMMA
+
+for (i in 1:nrow(gamma_combos)){
+  LogLik_gamma[i] <- gamma_loglik(shape = gamma_combos$shape[i],
+                                  scale = gamma_combos$scale[i])
+}
+
+LLs_gamma <- data.frame(LogLik_Gamma = LogLik_gamma,
+                       shape = gamma_combos$shape,
+                       scale = gamma_combos$scale)
+
+LLs_gamma |> subset(LogLik_gamma == max(LogLik_gamma)) -> MLEGamma
+```
+
+```{r}
+
+LogLik_invgaus <- c() # empty log-likelihoods vector for INVERSE GAUSSIAN
+
+for (i in 1:nrow(invgaus_combos)){
+  LogLik_invgaus[i] <- invgaus_loglik(mu = invgaus_combos$mu[i],
+                                      lambda = invgaus_combos$lambda[i])
+}
+
+LLs_invgaus <- data.frame(LogLik_InvGaus = LogLik_invgaus,
+                          mu = invgaus_combos$mu,
+                          lambda = invgaus_combos$lambda)
+
+LLs_invgaus |> subset(LogLik_invgaus == max(LogLik_invgaus)) -> MLEInvgaus
+```
+
+
+```{r}
+LLs_norm |> subset(sd == MLENorm$sd) |> 
+  subset(abs(LogLik_Norm - MLENorm$LogLik_Norm) < 1.92) |>
+  summarise(lowerCI_mean = min(mean), upperCI_mean = max(mean)) -> CI_mean
+
+LLs_norm |> subset(mean == MLENorm$mean) |> 
+  subset(abs(LogLik_Norm - MLENorm$LogLik_Norm) < 1.92) |>
+  summarise(lowerCI_sd = min(sd), upperCI_sd = max(sd)) -> CI_sd
+
+LLs_norm |> ggplot(aes(x = mean, y = sd, z = LogLik_Norm, fill = LogLik_Norm)) + 
+  geom_raster() + geom_contour(color = "grey") +
+  geom_pointrange(inherit.aes = F, aes(x = MLENorm$mean, 
+                                       y = MLENorm$sd,
+                                       ymin = CI_sd$lowerCI_sd,
+                                       ymax = CI_sd$upperCI_sd), color = "red") +
+  geom_pointrange(inherit.aes = F, aes(x = MLENorm$mean, 
+                                       xmin = CI_mean$lowerCI_mean,
+                                       xmax = CI_mean$upperCI_mean,
+                                       y = MLENorm$sd), color = "red")
+
+LLs_norm |> subset(sd == MLENorm$sd) |> ggplot(aes(x = mean, y = LogLik_Norm)) + geom_line()
+LLs_norm |> subset(mean == MLENorm$mean) |> ggplot(aes(x = sd, y = LogLik_Norm)) + geom_line()
+```
+
+```{r}
+LLs_gamma |> subset(shape == MLEGamma$shape) |> 
+  subset(abs(LogLik_Gamma - MLEGamma$LogLik_Gamma) < 1.92) |>
+  summarise(lowerCI_scale = min(scale), upperCI_scale = max(scale)) -> CI_scale
+
+LLs_gamma |> subset(scale == MLEGamma$scale) |> 
+  subset(abs(LogLik_Gamma - MLEGamma$LogLik_Gamma) < 1.92) |>
+  summarise(lowerCI_shape = min(shape), upperCI_shape = max(shape)) -> CI_shape
+
+LLs_gamma |> ggplot(aes(x = scale, y = shape, z = LogLik_Gamma, fill = LogLik_Gamma)) + 
+  geom_raster() + geom_contour(color = "grey") +
+  geom_pointrange(inherit.aes = F, aes(x = MLEGamma$scale, 
+                                       y = MLEGamma$shape,
+                                       ymin = CI_shape$lowerCI_shape,
+                                       ymax = CI_shape$upperCI_shape), color = "red") +
+  geom_pointrange(inherit.aes = F, aes(x = MLEGamma$scale, 
+                                       xmin = CI_scale$lowerCI_scale,
+                                       xmax = CI_scale$upperCI_scale,
+                                       y = MLEGamma$shape), color = "red")
+
+LLs_gamma |> subset(shape == MLEGamma$shape) |> ggplot(aes(x = scale, y = LogLik_Gamma)) + geom_line()
+LLs_gamma |> subset(scale == MLEGamma$scale) |> ggplot(aes(x = shape, y = LogLik_Gamma)) + geom_line()
+```
+
+```{r}
+LLs_invgaus |> subset(mu == MLEInvgaus$mu) |> 
+  subset(abs(LogLik_InvGaus - MLEInvgaus$LogLik_InvGaus) < 1.92) |>
+  summarise(lowerCI_lambda = min(lambda), upperCI_lambda = max(lambda)) -> CI_lambda
+
+LLs_invgaus |> subset(lambda == MLEInvgaus$lambda) |> 
+  subset(abs(LogLik_InvGaus - MLEInvgaus$LogLik_InvGaus) < 1.92) |>
+  summarise(lowerCI_mu = min(mu), upperCI_mu = max(mu)) -> CI_mu
+
+LLs_invgaus |> ggplot(aes(x = mu, y = lambda, z = LogLik_InvGaus, fill = LogLik_InvGaus)) + 
+  geom_raster() + geom_contour(color = "grey") +
+  geom_pointrange(inherit.aes = F, aes(x = MLEInvgaus$mu, 
+                                       y = MLEInvgaus$lambda,
+                                       ymin = CI_lambda$lowerCI_lambda,
+                                       ymax = CI_lambda$upperCI_lambda), color = "red") +
+  geom_pointrange(inherit.aes = F, aes(x = MLEInvgaus$mu, 
+                                       xmin = CI_mu$lowerCI_mu,
+                                       xmax = CI_mu$upperCI_mu,
+                                       y = MLEInvgaus$lambda), color = "red")
+
+LLs_invgaus |> subset(mu == MLEInvgaus$mu) |> ggplot(aes(x = lambda, y = LogLik_InvGaus)) + geom_line()
+LLs_invgaus |> subset(lambda == MLEInvgaus$lambda) |> ggplot(aes(x = mu, y = LogLik_InvGaus)) + geom_line()
+```
+
+##AIC
+```{r}
+-2*MLENorm$LogLik_Norm + 2*2
+-2*MLEGamma$LogLik_Gamma + 2*2
+-2*MLEInvgaus$LogLik_InvGaus + 2*2
+
+dinvgaus <- function(x, mu, lambda){
+  return (
+    sqrt(lambda/(2*pi*x^3)) * exp((-lambda*(x-mu)^2)/(2*x*mu^2))
+    )
+}
+
+vals <- seq(min(data$Shannon),max(data$Shannon), length = 1000)
+
+NormalDen <- cbind(x = vals, prob = dnorm(vals, mean = MLENorm$mean, sd = MLENorm$sd))
+GammaDen <- cbind(x = vals, prob = dgamma(vals, shape = MLEGamma$shape, scale = MLEGamma$scale))
+InverseGammaDen <- cbind(x = vals, 
+                         prob = dinvgaus(vals, mu = MLEInvgaus$mu, lambda = MLEInvgaus$lambda))
+
+data |> ggplot(aes(x = Shannon)) + geom_rug() +
+  geom_line(data = NormalDen, aes(x = x, y = prob), color = "red") +
+  geom_line(data = GammaDen, aes(x = x, y = prob), color = "blue") +
+  geom_line(data = InverseGammaDen, aes(x = x, y = prob), color = "black")
+```
+
+
+# Find which varaiables are linearly and positively correlated... 
+```{r}
+par(mfrow=c(1,1))
+
+pairs(data[, c("soil_C", "soil_N", "soil_P", "soil_pH", "soil_sal", "soil_wat", 
+               "biomass_above", "plant_dens", "leaf_N", "leaf_C", "leaf_P")])
+```
+
+#Test for co-linearality?
+```{r}
+cor_matrix <- cor(data[, c("soil_C", "soil_N", "soil_P", "soil_pH", "soil_sal",
+                           "soil_wat", "biomass_above", "plant_dens", "leaf_N", 
+                           "leaf_C", "leaf_P")], 
+                  use = "pairwise.complete.obs")
+print(cor_matrix)
+```
+
+#PCA!
+```{r}
+#PCA of all traits 
+pca.out <- prcomp(data[, c("soil_C", "soil_N", "soil_P", "soil_pH", "soil_sal", 
+                           "soil_wat", "biomass_above", "plant_dens", "leaf_N", 
+                           "leaf_C", "leaf_P")], scale.=T)
+```
+
+#This is not working for me :(
+```{r}
+#as.data.frame(pca.out$var$contrib)
+```
+
+# PC1: (1) soil_N (-0.3543157) (2) soil_wat (-0.3536549) (3) soil_pH (0.3370312) (4) biomass_above (0.3269548) (5) soil_C (-0.3267151)
+# PC2: (1) soil_C (0.44891398) (2) plant_dens (-0.40295140) (3) soil_sal (0.39164170) (4) soil_N (0.37709659)
+```{r}
+pca.out
+```
+
+```{r}
+summary(pca.out)
+```
+
+```{r}
+head(pca.out$rotation)
+```
+
+```{r}
+#Visual of PCA
+autoplot(pca.out, x=1,y=2,
+         data=final_shannon_UPDATED, 
+         colour="Treatment_grouped",
+         frame=TRUE) +
+  theme_classic()
+```
+
