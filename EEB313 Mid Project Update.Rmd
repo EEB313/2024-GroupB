@@ -1,0 +1,364 @@
+---
+title: "EEB313 Mid Project Update"
+output: pdf_document
+date: "2024-11-14"
+author: Gabi, Golshan, Samara, Jared
+---
+
+The original paper, “Investigating the role of biological characteristics on adaptive capacity within alien and rare plant species in China” had several flaws which prevented us from continuing to use its dataset for our project. Namely, the authors attempted to quantify adaptive capacity by simply asking "five experts" to rank categories of plant traits and their levels (e.g., in the category of reproductive mode there were three levels: (a) sexual, (b) asexual, or (c) combined sexual-asexual reproduction) they ranked from "most important: 5" to "least important: 1". Then all of these scores for all plant traits were compiled using a formula that was not fully disclosed in the main article, rather, in the complementary supplementary files. Despite the value of “expert opinions”, more robust quantitative methods of determining significant variables should have been utilized. Additionally, it is not a simple feat to quantify adaptive capacity through various “expert-informed” (as they mention) traits as this typically requires more comprehensive methods that include genetic, environmental, and evolutionary variables considered together. Considering these constraints, this dataset would have been incredibly hard to utilize in a unique and useful way.
+
+Instead, we have chosen to analyze the data from a paper by Jiang et al. titled “Restoration of native saltmarshes can reverse arthropod assemblages and trophic interactions changed by a plant invasion”.  The authors of the paper investigated how arthropod assemblages and trophic interactions changes in estuary salt marshes that are invaded with the non native Spartina alterniflora. They established 15 plots across 5 different plant communities which represents a gradient of stages of Spartina (exotic plant) invasion and removal: OP: Original Phragmites monoculture, TP: Threatened Phragmites monoculture, PS: Phragmites–Spartina mixture, IS: Invasive Spartina monoculture, and RP: Restored Phragmites monoculture. One of the datasets Jiang et al. (2022) provides is a set of raw data which includes four sheets: Arthropod list, Plant traits, Soil traits, and Stable isotopes. To test our hypothesis, we ultimately decided to focus on which traits, whether it be plant or soil traits, is/are most significant in explaining the variation in arthropod community (i.e. Shannon diversity, recall: relative abundance and evenness) across plant communities, and if there are differences in how these traits predict arthropod diversity between plant communities.  
+
+We can find the same conclusions of Jiang et al. (2022) in our own way to determine and verify the results. Jiang et al. found that the plant traits most responsible for driving changes in arthropod diversity was aboveground biomass, leaf N, and plant density. They found that the soil trait most responsible for driving changes in arthropod diversity was soil salinity. Here we state:
+
+H0: Soil and plant traits represented by principal component axes (PC1 and PC2) do not significantly predict arthropod diversity across all communities. 
+
+H1: Soil and plant traits represented by principal component axes (PC1 and PC2) are strong predictors of arthropod diversity across all communities. 
+
+H0.2 Soil and Plant traits represented by principal component axes do not differ in how they predict arthropod diversity across different communities.
+
+H2: Soil and Plant traits represented by principal component axes differ in how they predict arthropod diversity across different communities.
+
+To prepare our data for analysis, we had to reformat the data frame. We started by separating each sheet (plant traits, soil traits, and arthropod list) on the provided Excel file to their own csv with altered simplified columns. Then, we worked  with the arthropod data frame that listed the raw abundances of each arthropod species in every treatment in each of the 5 plant communities. The original data frame had each treatment as columns, and every arthropod species listed in the first column. We transformed the data so the first column would have the treatments and every subsequent column had species as headers. We also removed unnecessary columns (columns that had order, family and trophic group, as well as a column that only had NA values). 
+
+Once the data was properly formatted, we could continue with the data analysis: 
+
+The following method will be used to create a linear model to determine the strongest predictors of Shannon diversity of all our communities. We intend to compare our results with that of the original authors, in terms of determining which plant and soil traits are primarily responsible for driving differences in arthropod diversity across communities and groups 
+
+- We calculated Shannon diversity per treatment for all of the communities (15 treatments for 5 communities = 75 total Shannon diversity values) (we calculated Shannon diversity because the authors chose that diversity metric, we want to keep it consistent so our data is as comparable as possible)
+- We then determined the distribution type that best fits the Shannon diversity indices by conducting maximum log-likelihood calculations for a normal, gamma, and inverse gaussian probability density distribution. We used dnorm(), dgamma(), and a hand-made inverse gaussian formula to loop over a range of parameter values. 
+- Our MLE for normal was -19.28 (when mean = 3.43 and sd = 0.31), the MLE for gamma      was -20.56 (when shape = 116.1 and scale = 0.0295), the MLE for inverse gaussian         was -21.73 (when mu = 3.4 and lambda = 379.6). Thus, a normal probability density        distribution fits our data best. This allows us to use a linear regression model         for our future analysis.
+- We ran a pairwise correlation test between each of the 11 plant and soil traits. 
+- We found many of the soil traits to have high correlation values, and thus be          linearly correlated. On the other hand, our plant traits did not show high               correlations between other traits. We intend to use this data further in our             analysis to interpret our results of the linear models to understand the                 variable aggregations within our PC axes.
+- Due to the strong correlations between plant and soil traits, we decided to run a PCA to determine which of our 11 plant and soil traits contributed most strongly to the variation between our treatments to inform model selection, we generated a PCA of all possible predictor variables from the dataset (Soil salinity, soil N, soil C, soil P, soil moisture, soil pH, aboveground plant biomass, leaf C, leaf N, leaf P).  We then determined which traits fall on each PC axis using contrib/pc.out function.
+- The plant and soil traits that are associated with PC1 are the most responsible        (55.64%) for driving variance between treatments, with Soil N content (12.6%),  Soil moisture (12.5%) and soil pH (11.4%) being the most significant. For PC2            (10.5% of total variance), the variables, soil C content (20.1%), plant                  density (16.3%) and soil salinity (15.4%) contributed most strongly. 
+
+The analysis we still need to perform are: 
+
+- Perform model selection, using the PC axes as fixed effects 
+- Generate the following models:
+- with only PC1
+- with both PC1 and PC2, 
+- with both PC1, PC2 and their interaction
+- Select the model with the lowest AIC score  
+- The fixed effect (PC axis) with the largest coefficient (absolute value) is the most responsible for driving changes in arthropod diversity (Test H1)
+- Conduct a group-by-group analysis of each plant community - to see if there are any   differences in the drivers of diversity in each community (Test H2)
+- Compare results with the original paper
+
+
+R Code so far: 
+
+# Loading packages
+```{r, message=F, warning=F}
+require(tidyverse)
+require(deSolve)
+require(vegan)
+require(car)
+require(rgl)
+require(ggfortify)
+require(fitdistrplus)
+
+options(rgl.useNULL = TRUE) 
+rgl::setupKnitr(autoprint = TRUE)
+```
+
+# Loading csv files
+```{r}
+#Provided original csv files (separated sheets from the master excel file) 
+# column names were edited for simplicity sake
+read_csv("Arthropod_List.csv") -> Arthropod_List
+
+read_csv("Plant_Traits.csv") -> Plant_Traits
+
+read_csv("Soil_Traits.csv") -> Soil_Traits
+
+```
+
+## Rearraged Arthropod_List dataframe (each species is a column, each treatment is a row)
+```{r}
+teatment_cols <- Arthropod_List[,5:79]
+species_col <- Arthropod_List[c("Species")]
+
+new_AL <- data.frame(species_col, teatment_cols)
+
+AL_long <- new_AL %>%
+  pivot_longer(
+    cols = (starts_with("OP") | starts_with("RP") | starts_with("TP") | 
+              starts_with("IS") | starts_with("PS")), # Select treatment columns
+    names_to = "Treatment", # Name of new "Treatment" column
+    values_to = "Count" #  # Name of new "Count" column
+  )
+
+```
+
+```{r}
+AL_wide <- AL_long %>%
+  pivot_wider(
+    names_from = Species, # Create new columns from Species
+    values_from = Count   # Fill values from the "Count" column
+  )
+
+fixed_arthro <- AL_wide
+```
+
+
+# Shannon Diversity Calculations
+```{r}
+#Excluding the first and last column (as they d not contain data)
+for_shannon = fixed_arthro[,2:350]
+
+#Shannon diversity 
+shannon_indices = diversity(for_shannon, index = "shannon")
+```
+
+```{r}
+#Reformatting with column names specified 
+final_shannon = data.frame(Treatment = fixed_arthro$Treatment,
+                           Shannon = shannon_indices)
+```
+
+## Histogram of Shannon Diversity 
+Preliminary to determining distribution type.
+```{r}
+ggplot(final_shannon, aes(Shannon)) +
+  geom_histogram(binwidth = 0.05, alpha = 0.7, colour="white")
+```
+
+## Another way to histogram... looking normal..
+```{r}
+hist(final_shannon$Shannon, probability = TRUE, col = "lightblue", border = "black", breaks = 25)
+lines(density(final_shannon$Shannon), col = "red", lwd = 2)  # Adds a density curve
+```
+This is looks normal, however we need to determine distribution type in order to make the correct analysis and conclusions about our findings...
+
+#Data wrangling 
+##Group Treatments into Communities
+```{r}
+#Data is separated by into 75 treatments -> groups with 15 treatments each
+#To draw better conclusions, we need to group by group
+final_shannon$Community <- ifelse(startsWith(final_shannon$Treatment, "OP"), "OP",
+                                          ifelse(startsWith(final_shannon$Treatment, "RP"), "RP",
+                                                 ifelse(startsWith(final_shannon$Treatment, "TP"), "TP",
+                                                        ifelse(startsWith(final_shannon$Treatment, "IS"), "IS",
+                                                               ifelse(startsWith(final_shannon$Treatment, "PS"), "PS", "Other")))))
+```
+
+Rearranging columns so "Community" is beside "Treatment"
+```{r}
+final_shannon <- final_shannon[, c("Treatment", "Community", "Shannon")]
+```
+
+Visualization of Shannon diversity for each community 
+```{r}
+ggplot(final_shannon, aes(x = Community, y = Shannon)) +
+  geom_bar(stat = "identity", fill = "yellowgreen", color = "black") +
+  theme_minimal() +
+  labs(title = "Shannon Diversity for each Community", x = "Community",
+       y = "Shannon Diversity")
+```
+
+
+## Add all the predictor variable columns (soil and plant traits) onto final_shannon dataframe...
+```{r}
+final_shannon$soil_C <- Soil_Traits$Soil_C
+final_shannon$soil_N <- Soil_Traits$Soil_N
+final_shannon$soil_P <- Soil_Traits$Soil_P
+final_shannon$soil_pH <- Soil_Traits$Soil_pH
+final_shannon$soil_sal <- Soil_Traits$Soil_Salinity
+final_shannon$soil_wat <- Soil_Traits$Soil_Water
+
+final_shannon$biomass_above <- Plant_Traits$Aboveground_Biomass
+final_shannon$plant_dens <- Plant_Traits$Plant_Density
+final_shannon$leaf_N <- Plant_Traits$Leaf_N
+final_shannon$leaf_C <- Plant_Traits$Leaf_C
+final_shannon$leaf_P <- Plant_Traits$Leaf_P
+```
+
+## Making sure all the number columns are numeric!!
+Note that this also converts 'n/a' cells into NULL -- we will have to replace this later with an estimate!
+```{r}
+final_shannon[, 3:14] <- lapply(final_shannon[, 3:14], as.numeric)
+```
+
+###Saving the final_shannon dataframe as a csv file for sharing and future edits...
+```{r}
+write.csv(final_shannon, "final_shannon.csv")
+```
+
+##Filtering data for our final dataset
+OP14 and OP15 have NULL leaf_N values (due to equipment failure) -> here, we replace them with the mean of their community instead...
+```{r}
+replaced_FS <- final_shannon
+```
+
+```{r}
+#First filter out the data to involve only the OP community and then 
+# exclude the 2 rows with "n/a" leaf_N values:
+
+final_shannon %>%
+  filter(final_shannon$Community == "OP",
+         !is.na(final_shannon$leaf_N)) -> OPonly_noNA_FS
+```
+
+
+```{r}
+# Replacing the 2 cells with the mean of the OP'S leaf_N column
+replaced_FS <- final_shannon
+
+replaced_FS[replaced_FS$Treatment == "OP14", "leaf_N"] <- 
+  mean(OPonly_noNA_FS$leaf_N)
+replaced_FS[replaced_FS$Treatment == "OP15", "leaf_N"] <- 
+  mean(OPonly_noNA_FS$leaf_N)
+```
+
+###Renaming master data frame to a shorter name bc I will have to use it over and over again in log-likelihood evalutors!
+```{r}
+data <- replaced_FS
+```
+
+# Making ranges of parameter combinations for each distribution 
+## MLE: We test for normal, gamma, and inverse gaussian because they are the only distribution types that can reasonably fit our data and are generally accepted in a generalized linear mixed model! 
+```{r}
+norm_combos <- expand.grid(mean = seq(2.4, 4.2, 0.01),
+                            sd = seq(0.15, 0.7, 0.01))
+
+gamma_combos <- expand.grid(shape = seq(100, 150, 0.1),
+                            scale = seq(0.02, 0.04, 0.0005))
+
+invgaus_combos <- expand.grid(mu = seq(2, 6, 0.1),
+                              lambda = seq(200, 600, 0.1))
+```
+
+
+#Log-Likelihood evalutions 
+```{r}
+norm_loglik <- function(x = data$Shannon, mean, sd){
+  return (sum(log(dnorm(x = x, mean = mean, sd = sd))))
+}
+```
+
+```{r}
+gamma_loglik <- function(x = data$Shannon, shape, scale){
+  return (sum(log(dgamma(x = x, shape = shape, scale = scale))))
+}
+```
+
+```{r}
+invgaus_loglik <- function(x = data$Shannon, mu, lambda){
+  return (sum(log(
+    sqrt(lambda/(2*pi*x^3)) * exp((-lambda*(x-mu)^2)/(2*x*mu^2))
+    )))
+}
+```
+
+```{r}
+
+LogLik_norm <- c() # empty log-likelihoods vector for NORMAL
+
+for (i in 1:nrow(norm_combos)){
+  LogLik_norm[i] <- norm_loglik(mean = norm_combos$mean[i],
+                                sd = norm_combos$sd[i])
+}
+
+LLs_norm <- data.frame(LogLik_Norm = LogLik_norm,
+                       mean = norm_combos$mean,
+                       sd = norm_combos$sd)
+
+```
+
+```{r}
+
+LogLik_gamma <- c() # empty log-likelihoods vector for GAMMA
+
+for (i in 1:nrow(gamma_combos)){
+  LogLik_gamma[i] <- gamma_loglik(shape = gamma_combos$shape[i],
+                                  scale = gamma_combos$scale[i])
+}
+
+LLs_gamma <- data.frame(LogLik_Gamma = LogLik_gamma,
+                       shape = gamma_combos$shape,
+                       scale = gamma_combos$scale)
+
+```
+
+```{r}
+
+LogLik_invgaus <- c() # empty log-likelihoods vector for INVERSE GAUSSIAN
+
+for (i in 1:nrow(invgaus_combos)){
+  LogLik_invgaus[i] <- invgaus_loglik(mu = invgaus_combos$mu[i],
+                                      lambda = invgaus_combos$lambda[i])
+}
+
+LLs_invgaus <- data.frame(LogLik_InvGaus = LogLik_invgaus,
+                          mu = invgaus_combos$mu,
+                          lambda = invgaus_combos$lambda)
+
+```
+
+```{r}
+ggplot(LLs_norm, aes(x = mean, y = LogLik_Norm)) + geom_line()
+ggplot(LLs_norm, aes(x = sd, y = LogLik_Norm)) + geom_line()
+MLE_norm <- LLs_norm %>% subset(LogLik_Norm == max(LogLik_Norm))
+MLE_norm
+```
+
+```{r}
+ggplot(LLs_gamma, aes(x = shape, y = LogLik_Gamma)) + geom_line()
+ggplot(LLs_gamma, aes(x = scale, y = LogLik_Gamma)) + geom_line()
+MLE_gamma <- LLs_gamma %>% subset(LogLik_Gamma == max(LogLik_Gamma))
+MLE_gamma
+```
+
+```{r}
+ggplot(LLs_invgaus, aes(x = mu, y = LogLik_InvGaus)) + geom_line()
+ggplot(LLs_invgaus, aes(x = lambda, y = LogLik_InvGaus)) + geom_line()
+MLE_invgaus <- LLs_invgaus %>% subset(LogLik_InvGaus == max(LogLik_InvGaus))
+MLE_invgaus
+```
+
+# Find which varaiables are linearly and positively correlated
+```{r}
+par(mfrow=c(1,1))
+
+pairs(data[, c("soil_C", "soil_N", "soil_P", "soil_pH", "soil_sal", "soil_wat", 
+               "biomass_above", "plant_dens", "leaf_N", "leaf_C", "leaf_P")])
+```
+
+#Test for co-linearality
+```{r}
+cor_matrix <- cor(data[, c("soil_C", "soil_N", "soil_P", "soil_pH", "soil_sal",
+                           "soil_wat", "biomass_above", "plant_dens", "leaf_N", 
+                           "leaf_C", "leaf_P")], 
+                  use = "pairwise.complete.obs")
+print(cor_matrix)
+```
+
+#PCA 
+```{r}
+pca.out <- prcomp(data[, c("soil_C", "soil_N", "soil_P", "soil_pH", "soil_sal", 
+                           "soil_wat", "biomass_above", "plant_dens", "leaf_N", 
+                           "leaf_C", "leaf_P")], scale.=T)
+```
+
+```{r}
+pca.out
+```
+
+```{r}
+summary(pca.out)
+```
+
+```{r}
+head(pca.out$rotation)
+```
+## Visualized PCA
+```{r}
+autoplot(pca.out, x=1,y=2,
+         data=data, 
+         colour="Community",
+         frame=TRUE) +
+  theme_classic()
+```
+
+#Things to do after PCA: regression on PC1, PC2, and interaction!! Discriminate!...   
